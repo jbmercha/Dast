@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="DynamicArrayUnitTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="HashTableUnitTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dast\Dast.csproj">
