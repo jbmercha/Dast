@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dast", "Dast.csproj", "{538F82AF-6739-4AF1-910B-5A41E4C6F080}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dast", "Dast\Dast.csproj", "{538F82AF-6739-4AF1-910B-5A41E4C6F080}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DastUnitTests", "..\DastUnitTests\DastUnitTests.csproj", "{57E1F90C-3221-49F6-A123-AC038B1B3168}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DastUnitTests", "DastUnitTests\DastUnitTests.csproj", "{57E1F90C-3221-49F6-A123-AC038B1B3168}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
