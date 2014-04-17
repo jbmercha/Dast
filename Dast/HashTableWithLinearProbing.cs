@@ -3,15 +3,24 @@ using System.Collections.Generic;
 
 namespace Dast
 {
-    public class HashTable<TKey, TValue> : IHashTable<TKey, TValue>
+    public class HashTableWithLinearProbing<TKey, TValue> : IHashTable<TKey, TValue>
     {
-        private KeyValuePair<TKey, TValue>[] _array;
+        private struct HashEntry
+        {
+            public TKey Key;
+            public TValue Value;
+            public bool Full;
+        }
 
-        public HashTable()
+        private HashEntry[] _array;
+        private readonly EqualityComparer<TKey> _comparer;
+
+        public HashTableWithLinearProbing()
         {
             Count = 0;
             Capacity = 4;
-            _array = new KeyValuePair<TKey, TValue>[Capacity];
+            _array = new HashEntry[Capacity];
+            _comparer = EqualityComparer<TKey>.Default;
         }
 
         public int Count { get; private set; }
@@ -20,43 +29,38 @@ namespace Dast
         {
             get
             {
-                if (EqualityComparer<TKey>.Default.Equals(key, default(TKey)))
-                    throw new Exception("Invalid key.");
-                var initialIndex = GetIndexForKey(key);
+                var initialIndex = HashKey(key);
                 var i = initialIndex;
                 do
                 {
                     var item = _array[i];
-                    if (EqualityComparer<TKey>.Default.Equals(item.Key , key)) 
-                        return item.Value;
-                    if (EqualityComparer<TKey>.Default.Equals(item.Key, default(TKey)))
+                    if(!item.Full)
                         throw new KeyNotFoundException();
+                    if (_comparer.Equals(item.Key, key)) 
+                        return item.Value;
                     i = (i + 1) % Capacity;
                 } while (i != initialIndex);
                 throw new KeyNotFoundException();
             }
             set
             {
-                var d = default(TKey);
-                if (EqualityComparer<TKey>.Default.Equals(key, d))
-                    throw new Exception("Invalid key.");
                 while (true)
                 {
-                    var initialIndex = GetIndexForKey(key);
+                    var initialIndex = HashKey(key);
                     var i = initialIndex;
                     do
                     {
                         var item = _array[i];
-                        if (EqualityComparer<TKey>.Default.Equals(item.Key, d))
+                        if (!item.Full)
                         {
-                            _array[i] = new KeyValuePair<TKey, TValue>(key, value);
+                            _array[i] = new HashEntry {Key = key, Value = value, Full = true};
                             Count++;
-                            if(Count >= Capacity / 2) GrowArray();
+                            if(Count*2 >= Capacity / 3) GrowArray();
                             return;
                         }
-                        if (EqualityComparer<TKey>.Default.Equals(item.Key, key))
+                        if (_comparer.Equals(item.Key, key))
                         {
-                            _array[i] = new KeyValuePair<TKey, TValue>(key, value);
+                            _array[i] = new HashEntry { Key = key, Value = value, Full = true };
                             return;
                         }
                         i = (i + 1)%Capacity;
@@ -70,28 +74,28 @@ namespace Dast
         {
             throw new NotImplementedException();
             // This could leave GAPS, so the probing won't find the right item anymore!!!!
-            var initialIndex = GetIndexForKey(key);
+            var initialIndex = HashKey(key);
             var i = initialIndex;
             do
             {
                 var item = _array[i];
-                if (EqualityComparer<TKey>.Default.Equals(item.Key, key))
+                if (_comparer.Equals(item.Key, key))
                 {
-                    _array[i] = new KeyValuePair<TKey, TValue>();
+                    _array[i] = new HashEntry();
                     Count--;
                     return;
                 }
-                if (EqualityComparer<TKey>.Default.Equals(item.Key, default(TKey)))
+                if (_comparer.Equals(item.Key, default(TKey)))
                     throw new KeyNotFoundException();
                 i = (i + 1) % Capacity;
             } while (i != initialIndex);
             throw new KeyNotFoundException();
         }
 
-
-        private int GetIndexForKey(TKey key)
+        private int HashKey(TKey key)
         {
-            return key.GetHashCode() % Capacity;
+            var code = _comparer.GetHashCode(key);
+            return code & (Capacity-1); // Capacity is a power of 2
         }
 
         private void GrowArray()
@@ -99,10 +103,10 @@ namespace Dast
             Count = 0;
             Capacity *= 2;
             var oldArray = _array;
-            _array = new KeyValuePair<TKey, TValue>[Capacity];
+            _array = new HashEntry[Capacity];
             foreach (var item in oldArray)
             {
-                if (!EqualityComparer<TKey>.Default.Equals(item.Key, default(TKey)))
+                if (!_comparer.Equals(item.Key, default(TKey)))
                     this[item.Key] = item.Value;
             }
         }

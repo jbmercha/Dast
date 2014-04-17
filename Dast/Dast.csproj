@@ -37,7 +37,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DynamicArray.cs" />
-    <Compile Include="HashTable.cs" />
+    <Compile Include="HashTableWithLinearProbing.cs" />
     <Compile Include="IDynamicArray.cs" />
     <Compile Include="IHashTable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
