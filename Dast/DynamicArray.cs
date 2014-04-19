@@ -21,8 +21,16 @@ namespace Dast
         /// <returns></returns>
         public T this[int index]
         {
-            get { return _array[index]; }
-            set { _array[index] = value; }
+            get
+            {
+                if(index >= Count) throw new IndexOutOfRangeException();
+                return _array[index];
+            }
+            set
+            {
+                if (index >= Count) throw new IndexOutOfRangeException();
+                _array[index] = value; 
+            }
         }
 
         /// <summary>
