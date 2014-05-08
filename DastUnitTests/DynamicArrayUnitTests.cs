@@ -26,6 +26,24 @@ namespace DastUnitTests
         }
 
         [TestMethod]
+        [ExpectedException(typeof(IndexOutOfRangeException))]
+        public void FailIndexToLarge()
+        {
+            var target = new DynamicArray<int>();
+            target.Add(5);
+            var badIndex = target[2];
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(IndexOutOfRangeException))]
+        public void FailIndexToSmall()
+        {
+            var target = new DynamicArray<int>();
+            target.Add(5);
+            var badIndex = target[-1];
+        }
+
+        [TestMethod]
         public void RandomOperation()
         {
             var r = new Random();
@@ -33,25 +51,22 @@ namespace DastUnitTests
             var target = new DynamicArray<int>();
             for (var i = 0; i < totalOperations; i++)
             {
-                int oldCount;
+                int oldCount = target.Count;
                 switch (r.Next(3))
                 {
                     case 0: // Add
-                        oldCount = target.Count;
                         var newItem = r.Next();
                         target.Add(newItem);
                         Assert.AreEqual(oldCount + 1, target.Count);
                         Assert.AreEqual(newItem, target[oldCount]);
                         break;
                     case  1: // Remove by index
-                        oldCount = target.Count;
                         if(oldCount == 0) goto case 0;
                         var indexToRemove = r.Next(oldCount - 1);
                         target.RemoveAt(indexToRemove);
                         Assert.AreEqual(oldCount - 1, target.Count);
                         break;
                     case 2: // Remove by element
-                        oldCount = target.Count;
                         if (oldCount == 0) goto case 0;
                         var itemToRemove = target[r.Next(oldCount - 1)];
                         target.Remove(itemToRemove);
