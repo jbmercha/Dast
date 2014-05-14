@@ -11,7 +11,7 @@ namespace DastUnitTests
         [TestMethod]
         public void AddAndRemoveElements()
         {
-            const int totalElements = 100000;
+            const int totalElements = 10000;
             var target = new BinaryMinHeap<int>();
             var r = new Random();
             foreach (var i in Enumerable.Range(1, totalElements).OrderBy(x => r.Next(totalElements)))

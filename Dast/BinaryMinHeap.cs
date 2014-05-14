@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 
 namespace Dast
 {
@@ -9,49 +8,85 @@ namespace Dast
     public class BinaryMinHeap<T> : IHeap<T> where T : IComparable<T>
     {
         private readonly DynamicArray<T> _array = new DynamicArray<T>();
+        
+        /// <summary>
+        ///     Returns the number of items in this collection.
+        /// </summary>
         public int Count { get; private set; }
+        
+        /// <summary>
+        ///     Returns the minimum item in the collection
+        ///     O(1)
+        /// </summary>
+        /// <remarks>
+        ///     I went with a method instead of a property because this can throw an exception if the collection is empty
+        /// </remarks>
+        /// <returns></returns>
         public T PeekMin()
         {
             return _array[0];
         }
 
+        /// <summary>
+        ///     Removes and returns the minimum item in the collection
+        ///     O(log n)
+        /// </summary>
+        /// <returns></returns>
         public T RemoveMin()
         {
             var item = PeekMin();
-            Swap(0, _array.Count - 1);
-            _array.RemoveAt(_array.Count - 1);
-            Count--;
-            BubbleDown(0);
+            Swap(0, _array.Count - 1); // Replace the first item with the last one
+            _array.RemoveAt(_array.Count - 1); // Remove the last one
+            Count--; // Reduce the count
+            BubbleDown(0); // Bubble the item down to its correct position
             return item;
         }
 
+        /// <summary>
+        ///     Adds an item to the collection
+        ///     O(log n)
+        /// </summary>
+        /// <param name="item"></param>
         public void Add(T item)
         {
-            _array.Add(item);
-            BubbleUp(_array.Count - 1);
-            Count++;
+            _array.Add(item); // Add the item to the end
+            Count++; // Increase our count
+            BubbleUp(_array.Count - 1); // Bubble it up to its correct position
         }
 
         private void BubbleDown(int i)
         {
+            // Move item at i down
             while (true)
             {
-                var l = LeftChildOf(i);
-                var r = RightChildOf(i);
-                int smallest;
-                if (r > Count - 1)
+                var leftChildIndex = LeftChildIndexOf(i);
+                var rightChildIndex = RightChildIndexOf(i);
+                int smallestChildIndex;
+
+                // If we don't have a right child
+                if (rightChildIndex > Count - 1)
                 {
-                    if (l > Count - 1)
+                    // And don't have a left child
+                    if (leftChildIndex > Count - 1)
+                        // We are done?
                         return;
-                    smallest = l;
+                    // And do have a left child
+                    // The smallest child is the left child
+                    smallestChildIndex = leftChildIndex;
                 }
-                else if (l > Count - 1)
-                    smallest = r;
+                // Else if we don't have a left child
+                else if (leftChildIndex > Count - 1)
+                    // The right child is the smallest
+                    smallestChildIndex = rightChildIndex;
+                // Else we have both children
                 else
-                    smallest = (_array[l].CompareTo(_array[r]) < 0) ? l : r;
-                if (_array[i].CompareTo(_array[smallest]) < 0) return;
-                Swap(i, smallest);
-                i = smallest;
+                    // Compare the children to get the smallest one
+                    smallestChildIndex = (_array[leftChildIndex].CompareTo(_array[rightChildIndex]) < 0) ? leftChildIndex : rightChildIndex;
+                // If the item we are moving is smaller than the smallest child, we are done
+                if (_array[i].CompareTo(_array[smallestChildIndex]) < 0) return;
+                // Else we swap it with the smallest child and keep going
+                Swap(i, smallestChildIndex);
+                i = smallestChildIndex;
             }
         }
 
@@ -59,12 +94,16 @@ namespace Dast
         {
             while (true)
             {
+                // If we are at the top, we are done
                 if (i == 0) return;
-                var parent = ParentOf(i);
-                if (_array[parent].CompareTo(_array[i]) <= -1)
+                // Find the parent
+                var parentIndex = ParentIndexOf(i);
+                // If the parent is smaller than this item, we are done
+                if (_array[parentIndex].CompareTo(_array[i]) <= -1)
                     return; // Done
-                Swap(parent, i);
-                i = parent;
+                // Else, swap this item with the parent and keep going
+                Swap(parentIndex, i);
+                i = parentIndex;
             }
         }
 
@@ -75,17 +114,17 @@ namespace Dast
             _array[y] = temp;
         }
 
-        private static int LeftChildOf(int i)
+        private static int LeftChildIndexOf(int i)
         {
             return 2*i + 1;
         }
 
-        private static int RightChildOf(int i)
+        private static int RightChildIndexOf(int i)
         {
             return 2*i + 2;
         }
 
-        private static int ParentOf(int i)
+        private static int ParentIndexOf(int i)
         {
             return (i - 1)/2;
         }
