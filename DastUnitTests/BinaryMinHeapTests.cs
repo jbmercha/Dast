@@ -11,17 +11,19 @@ namespace DastUnitTests
         [TestMethod]
         public void AddAndRemoveElements()
         {
-            const int totalElements = 10000;
-            var target = new BinaryMinHeap<int>();
             var r = new Random();
-            foreach (var i in Enumerable.Range(1, totalElements).OrderBy(x => r.Next(totalElements)))
+            const int totalElements = 10000;
+            var elements = Enumerable.Range(1, totalElements).Select(x => r.Next(totalElements)).ToList();
+            var target = new BinaryMinHeap<int>();
+            foreach (var i in elements)
             {
                 target.Add(i);
             }
             Assert.AreEqual(totalElements, target.Count);
+            elements.Sort();
             for (var i = 0; i < totalElements; i++)
             {
-                Assert.AreEqual(i + 1, target.RemoveMin());
+                Assert.AreEqual(elements[i], target.RemoveMin());
             }
         }
     }
