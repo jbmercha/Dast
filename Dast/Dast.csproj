@@ -36,11 +36,13 @@
     <!-- A reference to the entire .NET Framework is automatically included -->
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BinaryMinHeap.cs" />
     <Compile Include="DynamicArray.cs" />
     <Compile Include="HashTableWithChaining.cs" />
     <Compile Include="HashTableWithLinearProbing.cs" />
     <Compile Include="IDynamicArray.cs" />
     <Compile Include="IHashTable.cs" />
+    <Compile Include="IHeap.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />

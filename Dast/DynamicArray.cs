@@ -21,8 +21,16 @@ namespace Dast
         /// <returns></returns>
         public T this[int index]
         {
-            get { return _array[index]; }
-            set { _array[index] = value; }
+            get
+            {
+                if (index >= Count || index < 0) throw new IndexOutOfRangeException();
+                return _array[index];
+            }
+            set
+            {
+                if (index >= Count || index < 0) throw new IndexOutOfRangeException();
+                _array[index] = value;
+            }
         }
 
         /// <summary>
@@ -70,7 +78,7 @@ namespace Dast
         /// <returns></returns>
         public int IndexOf(T item)
         {
-            for (int i = 0; i < Count; i++)
+            for (var i = 0; i < Count; i++)
             {
                 if (EqualityComparer<T>.Default.Equals(_array[i], item)) return i;
             }
