@@ -1,6 +1,6 @@
 ﻿namespace Dast
 {
-    interface IHashTable<in TKey, TValue>
+    public interface IHashTable<in TKey, TValue>
     {
         int Count { get; }
         TValue this[TKey key] { get; set; }

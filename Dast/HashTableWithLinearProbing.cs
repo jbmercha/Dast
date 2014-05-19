@@ -1,15 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 namespace Dast
 {
     public class HashTableWithLinearProbing<TKey, TValue> : IHashTable<TKey, TValue>
     {
+        [DebuggerDisplay("{Full ? \"Key = \" + Key.ToString() + \" Value = \" + Value.ToString() : Gap ? \"Gap\" : \"Empty\"}")]
         private struct HashEntry
         {
+            public int HashCode;
+            public bool Full;
+            public bool Gap;
             public TKey Key;
             public TValue Value;
-            public bool Full;
         }
 
         private HashEntry[] _array;
@@ -24,90 +28,110 @@ namespace Dast
         }
 
         public int Count { get; private set; }
-        public int Capacity { get; set; }
+        public int Capacity { get; private set; }
         public TValue this[TKey key]
         {
-            get
-            {
-                var initialIndex = HashKey(key);
-                var i = initialIndex;
-                do
-                {
-                    var item = _array[i];
-                    if(!item.Full)
-                        throw new KeyNotFoundException();
-                    if (_comparer.Equals(item.Key, key)) 
-                        return item.Value;
-                    i = (i + 1) % Capacity;
-                } while (i != initialIndex);
-                throw new KeyNotFoundException();
+            get {
+                return GetItem(key);
             }
-            set
+            set {
+                InsertItem(key, value);
+            }
+        }
+
+        private TValue GetItem(TKey key)
+        {
+            var hashCode = HashCode(key);
+            var initialIndex = hashCode%Capacity;
+            var i = initialIndex;
+            do
             {
-                while (true)
+                var item = _array[i];
+                if (!item.Full && !item.Gap)
+                    throw new KeyNotFoundException();
+                if (hashCode == item.HashCode && _comparer.Equals(item.Key, key))
+                    return item.Value;
+                i = (i + 1)%Capacity;
+            } while (i != initialIndex);
+            throw new KeyNotFoundException();
+        }
+
+        private void InsertItem(TKey key, TValue value)
+        {
+            var hashCode = HashCode(key);
+            var initialIndex = hashCode % Capacity;
+            var i = initialIndex;
+            while (true)
+            {
+                var item = _array[i];
+                if (!item.Full)
                 {
-                    var initialIndex = HashKey(key);
-                    var i = initialIndex;
-                    do
-                    {
-                        var item = _array[i];
-                        if (!item.Full)
-                        {
-                            _array[i] = new HashEntry {Key = key, Value = value, Full = true};
-                            Count++;
-                            if(Count*2 >= Capacity / 3) GrowArray();
-                            return;
-                        }
-                        if (_comparer.Equals(item.Key, key))
-                        {
-                            _array[i] = new HashEntry { Key = key, Value = value, Full = true };
-                            return;
-                        }
-                        i = (i + 1)%Capacity;
-                    } while (i != initialIndex);
-                    GrowArray();
+                    _array[i] = new HashEntry { HashCode = hashCode, Key = key, Value = value, Full = true };
+                    Count++;
+                    if (Count * 2 >= Capacity) GrowArray();
+                    return;
                 }
+                if (hashCode == item.HashCode && _comparer.Equals(item.Key, key))
+                {
+                    _array[i].Value = value;
+                    return;
+                }
+                i = (i + 1) % Capacity;
             }
         }
 
         public void Remove(TKey key)
         {
-            throw new NotImplementedException();
-            // This could leave GAPS, so the probing won't find the right item anymore!!!!
-            var initialIndex = HashKey(key);
+            var hashCode = HashCode(key);
+            var initialIndex = hashCode % Capacity;
             var i = initialIndex;
             do
             {
                 var item = _array[i];
-                if (_comparer.Equals(item.Key, key))
+                if (hashCode == item.HashCode && _comparer.Equals(item.Key, key))
                 {
                     _array[i] = new HashEntry();
                     Count--;
+                    if (_array[(i + 1)%Capacity].Full || _array[(i + 1)%Capacity].Gap)
+                        _array[i].Gap = true;
                     return;
                 }
-                if (_comparer.Equals(item.Key, default(TKey)))
+                if (!item.Full && !item.Gap)
                     throw new KeyNotFoundException();
                 i = (i + 1) % Capacity;
             } while (i != initialIndex);
             throw new KeyNotFoundException();
         }
 
-        private int HashKey(TKey key)
+        private int HashCode(TKey key)
         {
-            var code = _comparer.GetHashCode(key);
-            return code & (Capacity-1); // Capacity is a power of 2
+            return _comparer.GetHashCode(key);
         }
 
         private void GrowArray()
         {
-            Count = 0;
             Capacity *= 2;
             var oldArray = _array;
             _array = new HashEntry[Capacity];
-            foreach (var item in oldArray)
+            foreach (var item in oldArray.Where(item => item.Full))
             {
-                if (!_comparer.Equals(item.Key, default(TKey)))
-                    this[item.Key] = item.Value;
+                InsertItemDangerous(item);
+            }
+        }
+
+        private void InsertItemDangerous(HashEntry itemToInsert)
+        {
+            var initialIndex = itemToInsert.HashCode % Capacity;
+            var i = initialIndex;
+            while (true)
+            {
+                var item = _array[i];
+                if (!item.Full)
+                {
+                    _array[i] = itemToInsert;
+                    return;
+                }
+                i = (i + 1) % Capacity;
             }
         }
 
