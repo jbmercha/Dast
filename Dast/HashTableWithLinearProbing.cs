@@ -15,20 +15,32 @@ namespace Dast
             public TKey Key;
             public TValue Value;
         }
-
         private HashEntry[] _array;
+        private int _capacity;
         private readonly EqualityComparer<TKey> _comparer;
 
         public HashTableWithLinearProbing()
         {
             Count = 0;
-            Capacity = 4;
-            _array = new HashEntry[Capacity];
+            _capacity = 4;
+            _array = new HashEntry[_capacity];
             _comparer = EqualityComparer<TKey>.Default;
         }
 
+        /// <summary>
+        ///     Returns the number of items in this collection
+        ///     O(1)
+        /// </summary>
         public int Count { get; private set; }
-        public int Capacity { get; private set; }
+
+        /// <summary>
+        ///     Get will return the element in the table.
+        ///     O(1*)
+        ///     Set will add or update the element in the table.
+        ///     O(1*)
+        /// </summary>
+        /// <param name="key">The key of the element</param>
+        /// <returns>The element found by the key</returns>
         public TValue this[TKey key]
         {
             get {
@@ -39,10 +51,30 @@ namespace Dast
             }
         }
 
+        /// <summary>
+        ///     Removes an item from the table base off the key.
+        ///     O(1*)
+        /// </summary>
+        /// <param name="key">The key used to locate the item in the table</param>
+        public void Remove(TKey key)
+        {
+            var i = GetIndexOfItem(key);
+            _array[i] = new HashEntry();
+            Count--;
+            var nextItem = _array[(i + 1)%_capacity];
+            if (nextItem.Full || nextItem.Gap)
+                _array[i].Gap = true;
+        }
+
         private TValue GetItem(TKey key)
         {
+            return _array[GetIndexOfItem(key)].Value;
+        }
+
+        private int GetIndexOfItem(TKey key)
+        {
             var hashCode = HashCode(key);
-            var initialIndex = hashCode%Capacity;
+            var initialIndex = hashCode % _capacity;
             var i = initialIndex;
             do
             {
@@ -50,8 +82,8 @@ namespace Dast
                 if (!item.Full && !item.Gap)
                     throw new KeyNotFoundException();
                 if (hashCode == item.HashCode && _comparer.Equals(item.Key, key))
-                    return item.Value;
-                i = (i + 1)%Capacity;
+                    return i;
+                i = (i + 1) % _capacity;
             } while (i != initialIndex);
             throw new KeyNotFoundException();
         }
@@ -59,7 +91,7 @@ namespace Dast
         private void InsertItem(TKey key, TValue value)
         {
             var hashCode = HashCode(key);
-            var initialIndex = hashCode % Capacity;
+            var initialIndex = hashCode % _capacity;
             var i = initialIndex;
             while (true)
             {
@@ -68,7 +100,7 @@ namespace Dast
                 {
                     _array[i] = new HashEntry { HashCode = hashCode, Key = key, Value = value, Full = true };
                     Count++;
-                    if (Count * 2 >= Capacity) GrowArray();
+                    if (Count * 2 >= _capacity) GrowArray();
                     return;
                 }
                 if (hashCode == item.HashCode && _comparer.Equals(item.Key, key))
@@ -76,31 +108,8 @@ namespace Dast
                     _array[i].Value = value;
                     return;
                 }
-                i = (i + 1) % Capacity;
+                i = (i + 1) % _capacity;
             }
-        }
-
-        public void Remove(TKey key)
-        {
-            var hashCode = HashCode(key);
-            var initialIndex = hashCode % Capacity;
-            var i = initialIndex;
-            do
-            {
-                var item = _array[i];
-                if (hashCode == item.HashCode && _comparer.Equals(item.Key, key))
-                {
-                    _array[i] = new HashEntry();
-                    Count--;
-                    if (_array[(i + 1)%Capacity].Full || _array[(i + 1)%Capacity].Gap)
-                        _array[i].Gap = true;
-                    return;
-                }
-                if (!item.Full && !item.Gap)
-                    throw new KeyNotFoundException();
-                i = (i + 1) % Capacity;
-            } while (i != initialIndex);
-            throw new KeyNotFoundException();
         }
 
         private int HashCode(TKey key)
@@ -110,9 +119,9 @@ namespace Dast
 
         private void GrowArray()
         {
-            Capacity *= 2;
+            _capacity *= 2;
             var oldArray = _array;
-            _array = new HashEntry[Capacity];
+            _array = new HashEntry[_capacity];
             foreach (var item in oldArray.Where(item => item.Full))
             {
                 InsertItemDangerous(item);
@@ -121,7 +130,7 @@ namespace Dast
 
         private void InsertItemDangerous(HashEntry itemToInsert)
         {
-            var initialIndex = itemToInsert.HashCode % Capacity;
+            var initialIndex = itemToInsert.HashCode % _capacity;
             var i = initialIndex;
             while (true)
             {
@@ -131,9 +140,8 @@ namespace Dast
                     _array[i] = itemToInsert;
                     return;
                 }
-                i = (i + 1) % Capacity;
+                i = (i + 1) % _capacity;
             }
         }
-
     }
 }
