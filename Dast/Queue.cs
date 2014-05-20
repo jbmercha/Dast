@@ -54,9 +54,13 @@ namespace Dast
         {
             _capacity *= 2;
             var newArray = new T[_capacity];
-            
-            Array.Copy(_array, _start, newArray, 0, _array.Length - _start);
-            Array.Copy(_array, 0, newArray, _array.Length - _start, _start);
+            if(_start < _end)
+                Array.Copy(_array, _start, newArray, 0, Count);
+            else
+            {
+                Array.Copy(_array, _start, newArray, 0, _array.Length - _start);
+                Array.Copy(_array, 0, newArray, _array.Length - _start, _start);
+            }
             _end = Count;
             _start = 0;
             _array = newArray;

@@ -32,7 +32,7 @@ namespace DastUnitTests
                         frameworkQueue.Enqueue(newItem);
                         Assert.AreEqual(oldCount + 1, target.Count);
                         break;
-                    case 1: // Remove by index
+                    case 1: // Remove
                         if (oldCount == 0) goto case 0;
                         var item = target.Dequeue();
                         var frameworkItem = frameworkQueue.Dequeue();
